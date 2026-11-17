@@ -32,7 +32,8 @@ const WELCOME =
   "Nechta sherik bilan bo'lishmoqchisiz?";
 
 const NO_USERNAME_WARN =
-  "\n\n⚠️ Sizda <b>username</b> yo'q. Sheriklar sizni faqat ID orqali topa oladi, bu har doim ham ishlamaydi. " +
+  "\n\n⚠️ Sizda <b>username</b> yo'q. Sheriklarga faqat ismingiz profilga havola qilib beriladi — " +
+  "Telegram maxfiylik sozlamalaringizga qarab u ochilmasligi mumkin. " +
   "Telegram sozlamalaridan username qo'yib, /start ni qayta bosing.";
 
 function waitingText(size: number, count: number, hasUsername: boolean) {
@@ -44,13 +45,12 @@ function waitingText(size: number, count: number, hasUsername: boolean) {
   );
 }
 
+/** Telegram ID ko'rsatilmaydi: username bo'lsa @username, bo'lmasa ismning o'zi profilga havola. */
 function contactBlock(u: UserProfile) {
   const name = esc(fullName(u));
-  const handle = u.username ? `@${esc(u.username)}` : "<i>username yo'q</i>";
-  return (
-    `• <b>${name}</b> — ${handle}\n` +
-    `   ID: <code>${u.id}</code> · <a href="tg://user?id=${u.id}">profilni ochish</a>`
-  );
+  return u.username
+    ? `• ${name} — @${esc(u.username)}`
+    : `• <a href="tg://user?id=${u.id}">${name}</a>`;
 }
 
 async function notifyGroup(bot: Bot, memberIds: number[]) {
@@ -108,7 +108,6 @@ export function createBot() {
 
   pm.command("start", (ctx) => showStatusOrMenu(ctx));
   pm.command("status", (ctx) => showStatusOrMenu(ctx));
-  pm.command("id", (ctx) => ctx.reply(`Sizning Telegram ID: <code>${ctx.from.id}</code>`, { parse_mode: "HTML" }));
 
   pm.command("cancel", async (ctx) => {
     const size = await leaveQueue(ctx.from.id);
@@ -176,7 +175,6 @@ export async function setCommands(bot: Bot) {
     { command: "start", description: "Sherik topish / navbatga yozilish" },
     { command: "status", description: "Navbatdagi holatim" },
     { command: "cancel", description: "Navbatdan chiqish" },
-    { command: "id", description: "Telegram ID'mni ko'rsatish" },
   ]);
   for (const adminId of config.adminIds) {
     await bot.api
